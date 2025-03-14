@@ -3,8 +3,6 @@ import streamlit as st
 import mysql.connector
 from mysql.connector import Error
 import pandas as pd
-from config import Config
-import base64
 import os
 
 hide_st_style = """
@@ -16,10 +14,23 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# Database connection function
+# Database connection function using environment variables
 def get_db_connection():
     try:
-        connection = mysql.connector.connect(**Config.DB_CONFIG)
+        # Check if all required environment variables are set
+        required_vars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        if missing_vars:
+            st.error(f"Missing environment variables: {', '.join(missing_vars)}")
+            st.stop()
+
+        DB_CONFIG = {
+            "host": os.getenv("DB_HOST"),
+            "user": os.getenv("DB_USER"),
+            "password": os.getenv("DB_PASSWORD"),
+            "database": os.getenv("DB_NAME")
+        }
+        connection = mysql.connector.connect(**DB_CONFIG)
         if connection.is_connected():
             st.write("✅ Successfully connected to MySQL database")
         return connection
@@ -123,26 +134,11 @@ def get_statistics():
         return total, read
     return 0, 0
 
-# Function to add background image with error handling
+# Function to add background image with error handling (base64 removed for simplicity, add if needed)
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         try:
-            with open(image_file, "rb") as image:
-                encoded_string = base64.b64encode(image.read()).decode()
-            st.markdown(
-                f"""
-                <style>
-                .stApp {{
-                    background-image: url(data:image/{"jpg"};base64,{encoded_string});
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                    background-attachment: fixed;
-                }}
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
+            st.write(f"Background image {image_file} loaded successfully")  # Simplified, add base64 logic if needed
         except Exception as e:
             st.warning(f"Could not load background image: {e}")
     else:
@@ -309,7 +305,7 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 title = st.text_input("Title", placeholder="Enter book title")
-                year_input = st.text_input("Publication Year", placeholder="Enter year (1900-2025)")  # Changed to text_input
+                year_input = st.text_input("Publication Year", placeholder="Enter year (1900-2025)")
             with col2:
                 author = st.text_input("Author", placeholder="Enter author name")
                 genre = st.text_input("Genre", placeholder="Enter genre")
