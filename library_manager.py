@@ -4,6 +4,7 @@ import mysql.connector
 from mysql.connector import Error
 import pandas as pd
 import os
+from config import Config
 
 hide_st_style = """
             <style>
@@ -14,23 +15,10 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# Database connection function using environment variables
+# Database connection function
 def get_db_connection():
     try:
-        # Check if all required environment variables are set
-        required_vars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
-        missing_vars = [var for var in required_vars if not os.getenv(var)]
-        if missing_vars:
-            st.error(f"Missing environment variables: {', '.join(missing_vars)}")
-            st.stop()
-
-        DB_CONFIG = {
-            "host": os.getenv("DB_HOST"),
-            "user": os.getenv("DB_USER"),
-            "password": os.getenv("DB_PASSWORD"),
-            "database": os.getenv("DB_NAME")
-        }
-        connection = mysql.connector.connect(**DB_CONFIG)
+        connection = mysql.connector.connect(**Config.DB_CONFIG)
         if connection.is_connected():
             st.write("✅ Successfully connected to MySQL database")
         return connection
@@ -134,13 +122,25 @@ def get_statistics():
         return total, read
     return 0, 0
 
-# Function to add background image with error handling (base64 removed for simplicity, add if needed)
+# Function to add background image with error handling
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         try:
-            st.write(f"Background image {image_file} loaded successfully")  # Simplified, add base64 logic if needed
+            st.write(f"Background image {image_file} loaded successfully")
+            # Agar aap base64 encode karna chahte hain, to yeh future mein add kar sakte hain
         except Exception as e:
             st.warning(f"Could not load background image: {e}")
+            # Default background set karo
+            st.markdown(
+                """
+                <style>
+                .stApp {
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
     else:
         st.warning(f"Background image '{image_file}' not found. Using default background.")
         st.markdown(
@@ -160,8 +160,21 @@ def main():
     with st.spinner("Initializing database..."):
         init_db()
 
-    # Add background image
-    add_bg_from_local("library_background.jpg")
+    # Add background image (optional, comment out if not needed)
+    # Agar aapke paas image file nahi hai, to yeh line comment kar do
+    # add_bg_from_local("library_background.jpg")
+
+    # Default background set karo (image ke bina bhi app chalega)
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
     # Enhanced Custom CSS with updated metric styling
     st.markdown("""
